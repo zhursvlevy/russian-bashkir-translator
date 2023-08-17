@@ -1,0 +1,26 @@
+model:
+  d_ff: 2048
+  d_kv: 64
+  d_model: 512
+  decoder_start_token_id: 0
+  dropout_rate: 0.1
+  eos_token_id: 1
+  initializer_factor: 1.0
+  is_encoder_decoder: true
+  layer_norm_epsilon: 1.0e-06
+  model_type: t5
+  n_positions: 512
+  num_heads: 8
+  num_layers: 6
+  output_past: true
+  pad_token_id: 0
+  relative_attention_num_buckets: 32
+  vocab_size: 32128
+data:
+  path: data/dataset/train-00000-of-00001-cb5cc9a04cc776c6.parquet
+  batch_size: 64
+tokenizer:
+  pretrained: t5-small
+  vocab_size: ${model.vocab_size}
+  save_dir: data/ru_t5_tokenizer
+  lang: ru
