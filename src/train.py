@@ -8,18 +8,8 @@ from omegaconf import OmegaConf
 from .data.ba_ru_dataset import BaRuDataset
 from transformers import T5ForConditionalGeneration, T5Config, T5TokenizerFast
 
-from dataclasses import dataclass
+from .config import ExperimentConfig, DataConfig
 
-@dataclass
-class DataConfig:
-    train_data: str
-    val_data: str
-    batch_size: int = 4
-    shuffle: bool = True
-
-@dataclass
-class ExperimentConfig:
-    data: DataConfig
 
 def train(cfg: ExperimentConfig):
 
