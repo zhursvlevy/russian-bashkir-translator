@@ -9,5 +9,11 @@ class DataConfig:
     shuffle: bool = True
 
 @dataclass
+class TokenizerConfig:
+    ru_tokenizer: str
+    ba_tokenizer: str
+
+@dataclass
 class ExperimentConfig:
     data: DataConfig
+    tokenizer: TokenizerConfig
