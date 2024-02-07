@@ -1,15 +1,38 @@
-FROM ubuntu
+FROM nvidia/cuda:11.4.3-devel-ubuntu20.04 AS python_base_cuda11.4
 
-RUN apt-get update
+ENV DEBIAN_FRONTEND="noninteractive"
 
-RUN apt-get install -y python3
-RUN apt-get -y install python3-pip
-RUN pip install --no-cache --upgrade pip setuptools
+# Update system and install wget
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+        curl \
+        wget \
+        libpython3.10 \
+        npm \
+        pandoc \
+        ruby \
+        software-properties-common && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Install Conda
+RUN curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > ~/miniconda.sh -s && \
+    bash ~/miniconda.sh -b -p /home/user/conda && \
+    rm ~/miniconda.sh
+ENV PATH "/home/user/conda/bin:${PATH}"
+RUN conda install python=3.10
+
+
+#########################################################
+## Development Env
+#########################################################
+
+FROM python_base_cuda11.4 as anomalib_development_env
+
+RUN mkdir /app
 WORKDIR /app
 
-COPY . .
-
-RUN pip3 install -r requirements.txt
-
+# Install requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 

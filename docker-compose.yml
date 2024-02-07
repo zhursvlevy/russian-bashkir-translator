@@ -1,8 +1,8 @@
 version: '2'
 
 services:
-  anlayim_image:
-    container_name: anlayim
+  bak_ru_image:
+    container_name: bak-ru-translator
     build: .
     environment:
       - JUPYTER_ENABLE_LAB=yes

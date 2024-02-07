@@ -1,4 +1,0 @@
-pretrained: t5-small
-vocab_size: ${model.vocab_size}
-save_dir: data/tokenizer
-lang: ru
