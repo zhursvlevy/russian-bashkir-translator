@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from transformers import PretrainedConfig
 
 
 @dataclass
-class T5BaseConfig:
+class T5BaseConfig(PretrainedConfig):
     d_ff: int =  2048
     d_kv: int = 64
     d_model: int = 512

@@ -1,4 +1,4 @@
-_target_: src.models.mnist_module.MNISTLitModule
+_target_: src.models.bak_ru_module.BakRuModule
 
 optimizer:
   _target_: torch.optim.Adam
@@ -14,25 +14,29 @@ scheduler:
   patience: 10
 
 net:
-  _target_: src.models.components.t5.T5BaseConfig
-  d_ff: 2048
-  d_kv: 64
-  d_model: 512
-  decoder_start_token_id: 0
-  dropout_rate: 0.1
-  eos_token_id: 1
-  initializer_factor: 1.0
-  is_encoder_decoder: true
-  layer_norm_epsilon: 0.000001
-  model_type: "t5"
-  n_positions: 512
-  num_heads: 8
-  num_layers: 6
-  output_past: true
-  pad_token_id: 0
-  relative_attention_num_buckets: 32
-  vocab_size: 32128
+  _target_: src.models.components.t5.T5BaseModel
+  weights: null # t5-small
+  config:
+    _target_: src.models.components.config.T5BaseConfig
+    d_ff: 2048
+    d_kv: 64
+    d_model: 512
+    decoder_start_token_id: 0
+    dropout_rate: 0.1
+    eos_token_id: 1
+    initializer_factor: 1.0
+    is_encoder_decoder: true
+    layer_norm_epsilon: 0.000001
+    model_type: "t5"
+    n_positions: 512
+    num_heads: 8
+    num_layers: 6
+    output_past: true
+    pad_token_id: 0
+    relative_attention_num_buckets: 32
+    vocab_size: 32128
 
+tokenizer: ${data.tokenizer}
 
 # compile model for faster training with pytorch 2.0
 compile: false

@@ -1,9 +1,9 @@
 _target_: src.data.bak_ru_datamodule.BakRuDataModule
 data_dir: ${paths.data_dir}
-batch_size: 128 # Needs to be divisible by the number of devices (e.g., if in a distributed setup)
+batch_size: 4 # Needs to be divisible by the number of devices (e.g., if in a distributed setup)
 num_workers: 0
 max_len: 256
 pin_memory: False
 tokenizer:
   _target_: transformers.T5Tokenizer
-  vocab_file: ${data_dir}
+  vocab_file: ${paths.data_dir}train_split.model

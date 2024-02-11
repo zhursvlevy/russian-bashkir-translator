@@ -4,6 +4,10 @@ import torch
 from lightning import LightningModule
 from torchmetrics.text import BLEUScore
 from torchmetrics import MeanMetric, MaxMetric
+from transformers import BasicTokenizer
+from src.utils import RankedLogger
+
+log = RankedLogger(__name__, rank_zero_only=True)
 
 
 class BakRuModule(LightningModule):
@@ -13,6 +17,7 @@ class BakRuModule(LightningModule):
         net: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
+        tokenizer: BasicTokenizer,
         compile: bool,
     ) -> None:
 
@@ -44,7 +49,7 @@ class BakRuModule(LightningModule):
         """
         if self.training:
             return self.net(input_ids, attention_mask, labels).loss
-        return self.net.generate(input_ids)
+        return self.net.generate(input_ids, attention_mask)
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
@@ -101,20 +106,26 @@ class BakRuModule(LightningModule):
         :param batch_idx: The index of the current batch.
         """
         preds, labels = self.model_step(batch)
+        labels[labels == -100] = self.hparams.tokenizer.pad_token_id
+        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
 
         # update and log metrics
         # self.val_loss(loss)
         self.val_bleu.update(preds, labels)
         # self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val/bleu", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/bleu", self.val_bleu, on_step=False, on_epoch=True, prog_bar=True)
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
-        acc = self.val_acc.compute()  # get current val acc
-        self.val_acc_best(acc)  # update best so far val acc
+        acc = self.val_bleu.compute()  # get current val acc
+        self.val_bleu_best(acc)  # update best so far val acc
         # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
-        self.log("val/acc_best", self.val_acc_best.compute(), sync_dist=True, prog_bar=True)
+        self.log("val/bleu_best", self.val_bleu_best.compute(), sync_dist=True, prog_bar=True)
+
+    def on_test_epoch_start(self) -> None:
+        self.val_bleu.reset()
 
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         """Perform a single test step on a batch of data from the test set.
@@ -123,13 +134,14 @@ class BakRuModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        loss, preds, targets = self.model_step(batch)
-
+        preds, labels = self.model_step(batch)
+        labels[labels == -100] = self.hparams.tokenizer.pad_token_id
+        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
         # update and log metrics
-        self.test_loss(loss)
-        self.test_acc(preds, targets)
+        self.val_bleu(preds, labels)
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/bleu", self.val_bleu, on_step=False, on_epoch=True, prog_bar=True)
 
     def on_test_epoch_end(self) -> None:
         """Lightning hook that is called when a test epoch ends."""
@@ -163,7 +175,7 @@ class BakRuModule(LightningModule):
                 "optimizer": optimizer,
                 "lr_scheduler": {
                     "scheduler": scheduler,
-                    "monitor": "val/loss",
+                    "monitor": "val/bleu",
                     "interval": "epoch",
                     "frequency": 1,
                 },

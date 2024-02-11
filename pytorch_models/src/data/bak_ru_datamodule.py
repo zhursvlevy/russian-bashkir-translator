@@ -8,6 +8,10 @@ from transformers import BasicTokenizer
 
 from src.data.components.bak_ru_dataset import BakRuDataset, Language
 
+from src.utils import RankedLogger
+
+log = RankedLogger(__name__, rank_zero_only=True)
+
 
 class BakRuDataModule(LightningDataModule):
 
@@ -40,33 +44,57 @@ class BakRuDataModule(LightningDataModule):
 
         # load and split datasets only if not loaded already
         if not self.data_train and not self.data_val and not self.data_test:
-
+            train_path = list(Path(self.hparams.data_dir).glob("train*"))
+            val_path = list(Path(self.hparams.data_dir).glob("val*"))
+            test_path = list(Path(self.hparams.data_dir).glob("test*"))
+            if len(train_path) == 0:
+                raise("train dataset must be provided")
+            if len(val_path) == 0:
+                raise("val dataset must be provided")
+            if len(train_path) > 1:
+                raise("Only one train file must be provided. More than one train dataset file found")
+            if len(val_path) > 1:
+                raise("Only one val file must be provided. More than one val dataset file found") 
             ru_bak_trainset = BakRuDataset(
-                Path(self.hparams.data_dir).glob("train")[0], 
+                train_path[0], 
                 Language.BAK, 
                 tokenizer=self.hparams.tokenizer, 
                 max_len=self.hparams.max_len
                 )
             bak_ru_trainset = BakRuDataset(
-                Path(self.hparams.data_dir).glob("train")[0], 
+                train_path[0],
                 Language.RU, 
                 tokenizer=self.hparams.tokenizer, 
                 max_len=self.hparams.max_len
                 )
             ru_bak_valset = BakRuDataset(
-                Path(self.hparams.data_dir).glob("val")[0], 
+                val_path[0], 
                 Language.BAK, 
                 tokenizer=self.hparams.tokenizer, 
                 max_len=self.hparams.max_len
                 )
             bak_ru_valset = BakRuDataset(
-                Path(self.hparams.data_dir).glob("val")[0], 
+                val_path[0], 
                 Language.RU, 
                 tokenizer=self.hparams.tokenizer, 
                 max_len=self.hparams.max_len
                 )
             self.data_train = ConcatDataset(datasets=[bak_ru_trainset, ru_bak_trainset])
             self.data_val = ConcatDataset(datasets=[bak_ru_valset, ru_bak_valset])
+            if len(test_path) == 1:
+                ru_bak_testset = BakRuDataset(
+                    test_path[0], 
+                    Language.BAK, 
+                    tokenizer=self.hparams.tokenizer, 
+                    max_len=self.hparams.max_len
+                )
+                bak_ru_testset = BakRuDataset(
+                    test_path[0], 
+                    Language.RU, 
+                    tokenizer=self.hparams.tokenizer, 
+                    max_len=self.hparams.max_len
+                )
+                self.data_test = ConcatDataset(datasets=[bak_ru_testset, ru_bak_testset])
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
@@ -95,7 +123,13 @@ class BakRuDataModule(LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader[Any]:
-        pass
+        return DataLoader(
+            dataset=self.data_test,
+            batch_size=self.batch_size_per_device,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=False,
+        )
 
     def teardown(self, stage: Optional[str] = None) -> None:
         """Lightning hook for cleaning up after `trainer.fit()`, `trainer.validate()`,
