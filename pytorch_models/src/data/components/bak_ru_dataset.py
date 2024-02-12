@@ -6,10 +6,6 @@ from torch.utils.data import Dataset
 import pandas as pd
 from enum import Enum
 
-from src.utils import RankedLogger
-
-log = RankedLogger(__name__, rank_zero_only=True)
-
 
 class Language(str, Enum):
     RU = "русский"
@@ -52,8 +48,6 @@ class BakRuDataset(Dataset):
             )
         labels = target.input_ids
         labels[labels == self.tokenizer.pad_token_id] = self.IGNORE_INDEX
-        log.info(f"SHAPE: {labels.shape}")
-        log.info(source.input_ids.shape)
         return source.input_ids.squeeze(0), source.attention_mask.squeeze(0), labels.squeeze(0)
 
     @staticmethod

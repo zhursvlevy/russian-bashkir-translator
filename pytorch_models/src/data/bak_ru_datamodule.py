@@ -8,10 +8,6 @@ from transformers import BasicTokenizer
 
 from src.data.components.bak_ru_dataset import BakRuDataset, Language
 
-from src.utils import RankedLogger
-
-log = RankedLogger(__name__, rank_zero_only=True)
-
 
 class BakRuDataModule(LightningDataModule):
 
