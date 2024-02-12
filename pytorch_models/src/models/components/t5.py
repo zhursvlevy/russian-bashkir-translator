@@ -8,9 +8,6 @@ import pyrootutils
 
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
-from src.utils import RankedLogger
-
-log = RankedLogger(__name__, rank_zero_only=True)
 from pytorch_models.src.models.components.config import T5BaseConfig
 
 
@@ -26,7 +23,6 @@ class T5BaseModel(torch.nn.Module):
             self.model.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, labels: torch.Tensor):
-        log.info(f"SHAPE: {input_ids.shape}")
         return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
 
     def generate(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
