@@ -47,14 +47,9 @@ class BakRuModule(LightningModule):
         :param x: A tensor of images.
         :return: A tensor of logits.
         """
-        if self.training:
-            return {
-                "loss": self.net(input_ids, attention_mask, labels).loss, 
-                "pred": None
-                }
         return {
             "loss": self.net(input_ids, attention_mask, labels).loss,
-            "pred": self.net.generate(input_ids, attention_mask)
+            "preds": None if self.training else self.net.generate(input_ids, attention_mask)
             }
 
     def on_train_start(self) -> None:
@@ -112,9 +107,10 @@ class BakRuModule(LightningModule):
         :param batch_idx: The index of the current batch.
         """
         output = self.model_step(batch)
+        labels, preds = output["labels"], output["preds"]
         labels[labels == -100] = self.hparams.tokenizer.pad_token_id
-        preds = self.hparams.tokenizer.batch_decode(output["pred"], skip_special_tokens=True)
-        labels = self.hparams.tokenizer.batch_decode(output["labels"], skip_special_tokens=True)
+        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
         labels = [[label] for label in labels] # for bleu metric purposes
         # update and log metrics
         self.val_loss(output["loss"])
@@ -141,9 +137,10 @@ class BakRuModule(LightningModule):
         :param batch_idx: The index of the current batch.
         """
         output = self.model_step(batch)
+        labels, preds = output["labels"], output["preds"]
         labels[labels == -100] = self.hparams.tokenizer.pad_token_id
-        preds = self.hparams.tokenizer.batch_decode(output["pred"], skip_special_tokens=True)
-        labels = self.hparams.tokenizer.batch_decode(output["labels"], skip_special_tokens=True)
+        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
         # update and log metrics
         self.val_bleu(preds, labels)
         # self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
