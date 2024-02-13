@@ -31,11 +31,11 @@ class BakRuModule(LightningModule):
 
         # metric objects for calculating and averaging accuracy across batches
         # self.train_bleu = BLEUScore()
-        self.val_bleu = BLEUScore()
+        self.val_bleu = BLEUScore(n_gram=2) # use bigrams
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
-        # self.val_loss = MeanMetric()
+        self.val_loss = MeanMetric()
         # self.test_loss = MeanMetric()
 
         # for tracking best so far validation accuracy
@@ -48,14 +48,20 @@ class BakRuModule(LightningModule):
         :return: A tensor of logits.
         """
         if self.training:
-            return self.net(input_ids, attention_mask, labels).loss
-        return self.net.generate(input_ids, attention_mask)
+            return {
+                "loss": self.net(input_ids, attention_mask, labels).loss, 
+                "pred": None
+                }
+        return {
+            "loss": self.net(input_ids, attention_mask, labels).loss,
+            "pred": self.net.generate(input_ids, attention_mask)
+            }
 
     def on_train_start(self) -> None:
         """Lightning hook that is called when training begins."""
         # by default lightning executes validation step sanity checks before training starts,
         # so it's worth to make sure validation metrics don't store results from these checks
-        # self.val_loss.reset()
+        self.val_loss.reset()
         self.val_bleu.reset()
         self.val_bleu_best.reset()
 
@@ -72,7 +78,7 @@ class BakRuModule(LightningModule):
             - A tensor of target labels.
         """
         input_ids, attention_mask, labels = batch
-        return self.forward(input_ids, attention_mask, labels), labels
+        return {**self.forward(input_ids, attention_mask, labels), "labels": labels}
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -84,15 +90,15 @@ class BakRuModule(LightningModule):
         :param batch_idx: The index of the current batch.
         :return: A tensor of losses between model predictions and targets.
         """
-        loss, labels = self.model_step(batch)
+        output = self.model_step(batch)
 
         # update and log metrics
-        self.train_loss(loss)
+        self.train_loss(output["loss"])
         self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
         # self.log("train/acc", self.train_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         # return loss or backpropagation will fail
-        return loss
+        return output["loss"]
 
     def on_train_epoch_end(self) -> None:
         "Lightning hook that is called when a training epoch ends."
@@ -105,21 +111,21 @@ class BakRuModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        preds, labels = self.model_step(batch)
+        output = self.model_step(batch)
         labels[labels == -100] = self.hparams.tokenizer.pad_token_id
-        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
-        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
-
+        preds = self.hparams.tokenizer.batch_decode(output["pred"], skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(output["labels"], skip_special_tokens=True)
+        labels = [[label] for label in labels] # for bleu metric purposes
         # update and log metrics
-        # self.val_loss(loss)
+        self.val_loss(output["loss"])
         self.val_bleu.update(preds, labels)
-        # self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val/bleu", self.val_bleu, on_step=False, on_epoch=True, prog_bar=True)
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
-        acc = self.val_bleu.compute()  # get current val acc
-        self.val_bleu_best(acc)  # update best so far val acc
+        bleu = self.val_bleu.compute()  # get current val acc
+        self.val_bleu_best(bleu)  # update best so far val acc
         # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
         self.log("val/bleu_best", self.val_bleu_best.compute(), sync_dist=True, prog_bar=True)
@@ -134,10 +140,10 @@ class BakRuModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        preds, labels = self.model_step(batch)
+        output = self.model_step(batch)
         labels[labels == -100] = self.hparams.tokenizer.pad_token_id
-        preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
-        labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        preds = self.hparams.tokenizer.batch_decode(output["pred"], skip_special_tokens=True)
+        labels = self.hparams.tokenizer.batch_decode(output["labels"], skip_special_tokens=True)
         # update and log metrics
         self.val_bleu(preds, labels)
         # self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)

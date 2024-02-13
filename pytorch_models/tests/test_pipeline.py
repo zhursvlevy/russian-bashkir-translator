@@ -1,15 +1,18 @@
 import pytest
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, open_dict
+import torch
 
 from pytorch_models.src.train import train
+
+IS_CUDA_AVAILABLE = torch.cuda.is_available()
 
 
 @pytest.mark.parametrize(
         ("device",),
         [
             pytest.param("cpu", id="test run on cpu"),
-            pytest.param("gpu", id="test run on gpu")
+            pytest.param("gpu", id="test run on gpu", marks=pytest.mark.skipif(not IS_CUDA_AVAILABLE, reason="CUDA is not available"))
          ]
 )
 def test_train_fast_dev_run(cfg_train: DictConfig, device: str) -> None:
