@@ -18,6 +18,9 @@ class BakRuDataModule(LightningDataModule):
         max_len: int = 512,
         batch_size: int = 64,
         num_workers: int = 0,
+        train_size: int = 50000,
+        val_size: int = 1000,
+        test_size: int = 1000,  
         pin_memory: bool = False,
     ) -> None:
         super().__init__()
@@ -55,25 +58,29 @@ class BakRuDataModule(LightningDataModule):
                 train_path[0], 
                 Language.BAK, 
                 tokenizer=self.hparams.tokenizer, 
-                max_len=self.hparams.max_len
+                max_len=self.hparams.max_len,
+                num_samples=self.hparams.train_size
                 )
             bak_ru_trainset = BakRuDataset(
                 train_path[0],
                 Language.RU, 
                 tokenizer=self.hparams.tokenizer, 
-                max_len=self.hparams.max_len
+                max_len=self.hparams.max_len,
+                num_samples=self.hparams.train_size
                 )
             ru_bak_valset = BakRuDataset(
                 val_path[0], 
                 Language.BAK, 
                 tokenizer=self.hparams.tokenizer, 
-                max_len=self.hparams.max_len
+                max_len=self.hparams.max_len,
+                num_samples=self.hparams.val_size
                 )
             bak_ru_valset = BakRuDataset(
                 val_path[0], 
                 Language.RU, 
                 tokenizer=self.hparams.tokenizer, 
-                max_len=self.hparams.max_len
+                max_len=self.hparams.max_len,
+                num_samples=self.hparams.val_size
                 )
             self.data_train = ConcatDataset(datasets=[bak_ru_trainset, ru_bak_trainset])
             self.data_val = ConcatDataset(datasets=[bak_ru_valset, ru_bak_valset])
@@ -82,13 +89,15 @@ class BakRuDataModule(LightningDataModule):
                     test_path[0], 
                     Language.BAK, 
                     tokenizer=self.hparams.tokenizer, 
-                    max_len=self.hparams.max_len
+                    max_len=self.hparams.max_len,
+                    num_samples=self.hparams.test_size
                 )
                 bak_ru_testset = BakRuDataset(
-                    test_path[0], 
-                    Language.RU, 
+                    test_path[0],
+                    Language.RU,
                     tokenizer=self.hparams.tokenizer, 
-                    max_len=self.hparams.max_len
+                    max_len=self.hparams.max_len,
+                    num_samples=self.hparams.test_size
                 )
                 self.data_test = ConcatDataset(datasets=[bak_ru_testset, ru_bak_testset])
 

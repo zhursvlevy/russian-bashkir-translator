@@ -14,9 +14,11 @@ class Language(str, Enum):
 
 class BakRuDataset(Dataset):
     IGNORE_INDEX = -100
-
-    def __init__(self, path2dset: str, target_lang: Language, tokenizer: BasicTokenizer, max_len: int) -> None:
+    SEED = 42
+    def __init__(self, path2dset: str, target_lang: Language, tokenizer: BasicTokenizer, max_len: int, num_samples: int = -1) -> None:
         self.dset = pd.read_parquet(path2dset)
+        if num_samples > -1:
+            self.dset = self.dset.sample(min(num_samples, len(self.dset)), random_state=self.SEED)
         self.target_lang = target_lang
         self.prefix = self._set_prefix(Language.RU, Language.BAK) \
             if target_lang == Language.BAK else self._set_prefix(Language.BAK, Language.RU)

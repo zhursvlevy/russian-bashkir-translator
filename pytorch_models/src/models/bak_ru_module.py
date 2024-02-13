@@ -30,13 +30,13 @@ class BakRuModule(LightningModule):
         # loss function
 
         # metric objects for calculating and averaging accuracy across batches
-        self.train_bleu = BLEUScore()
+        # self.train_bleu = BLEUScore()
         self.val_bleu = BLEUScore()
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
-        self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
+        # self.val_loss = MeanMetric()
+        # self.test_loss = MeanMetric()
 
         # for tracking best so far validation accuracy
         self.val_bleu_best = MaxMetric()
@@ -140,7 +140,7 @@ class BakRuModule(LightningModule):
         labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
         # update and log metrics
         self.val_bleu(preds, labels)
-        self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
+        # self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/bleu", self.val_bleu, on_step=False, on_epoch=True, prog_bar=True)
 
     def on_test_epoch_end(self) -> None:
