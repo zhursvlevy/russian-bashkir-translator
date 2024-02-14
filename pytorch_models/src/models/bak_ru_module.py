@@ -141,6 +141,7 @@ class BakRuModule(LightningModule):
         labels[labels == -100] = self.hparams.tokenizer.pad_token_id
         preds = self.hparams.tokenizer.batch_decode(preds, skip_special_tokens=True)
         labels = self.hparams.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        labels = [[label] for label in labels] # for bleu metric purposes
         # update and log metrics
         self.val_bleu(preds, labels)
         # self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
