@@ -4,8 +4,9 @@
 
 # project files
 
-/data
-/outputs
+data/*
+!.gitkeep
+outputs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
