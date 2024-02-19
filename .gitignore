@@ -4,8 +4,8 @@
 
 # project files
 
-data/*
-!.gitkeep
+data
+!data/.gitkeep
 /outputs
 
 # Byte-compiled / optimized / DLL files
