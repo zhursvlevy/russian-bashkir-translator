@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  bak_ru_image:
+    container_name: bak-ru-translator
+    build: .
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=token
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - .:/app
+    ports:
+      - 8080:8888
+    command: "jupyter lab --ip 0.0.0.0 --port=8888 --no-browser --allow-root"
