@@ -1,3 +1,0 @@
-- data.path=data/dataset/train-00000-of-00001-cb5cc9a04cc776c6.parquet
-- tokenizer.save_dir=data/ru_t5_tokenizer
-- tokenizer.lang=ru
