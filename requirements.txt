@@ -1,19 +1,13 @@
-torch==2.0.1
 numpy
 pandas
 matplotlib
 seaborn
-jupyterlab
-transformers
 pyarrow
-lightning
-clearml
-rich
-rootutils
-sentencepiece
 
-torch>=2.0.0
-torchvision>=0.15.0
+# -------- frameworks ----- #
+sentencepiece
+transformers
+torch==2.0.1
 lightning>=2.0.0
 torchmetrics>=0.11.4
 
@@ -23,13 +17,15 @@ hydra-colorlog==1.2.0
 hydra-optuna-sweeper==1.2.0
 
 # --------- loggers --------- #
+clearml
 
 # --------- others --------- #
 rootutils       # standardizing the project root setup
+pyrootutils
 pre-commit      # hooks for applying linters on commit
 rich            # beautiful text formatting in terminal
-pytest          # tests
 # sh            # for running bash commands in some tests (linux/macos only)
-
+wldhx.yadisk-direct # download data
 # ----DEV----
 pytest
+jupyterlab

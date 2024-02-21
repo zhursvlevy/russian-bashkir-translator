@@ -1,6 +1,6 @@
 from typing import Optional
 
-from transformers import T5ForConditionalGeneration
+from transformers import T5ForConditionalGeneration, T5Config
 import torch
 from torch import nn
 
@@ -8,12 +8,10 @@ import pyrootutils
 
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
-from pytorch_models.src.models.components.config import T5BaseConfig
-
 
 class T5BaseModel(torch.nn.Module):
 
-    def __init__(self, weights: Optional[str] = None, config: Optional[T5BaseConfig] = None) -> None:
+    def __init__(self, weights: Optional[str] = None, config: Optional[T5Config] = None) -> None:
         super().__init__()
         if weights:
             self.model = T5ForConditionalGeneration.from_pretrained(weights)

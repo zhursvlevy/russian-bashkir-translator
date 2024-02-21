@@ -1,0 +1,1 @@
+LINK=$(yadisk-direct $1) && wget "$LINK" -O $2
