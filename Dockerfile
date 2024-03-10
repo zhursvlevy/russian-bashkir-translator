@@ -27,7 +27,7 @@ RUN conda install python=3.10
 ## Development Env
 #########################################################
 
-FROM python_base_cuda11.4 as anomalib_development_env
+FROM python_base_cuda11.4 as development_env
 
 RUN mkdir /app
 WORKDIR /app
