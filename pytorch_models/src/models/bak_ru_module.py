@@ -24,7 +24,6 @@ class BakRuModule(LightningModule):
         super().__init__()
 
         self.save_hyperparameters(logger=False)
-
         self.net = net
 
         # loss function
